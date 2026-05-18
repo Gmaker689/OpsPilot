@@ -1,0 +1,142 @@
+services:
+  # ==========================================
+  # Milvus 向量数据库 + 依赖服务
+  # ==========================================
+  etcd:
+    container_name: opspilot-etcd
+    image: quay.io/coreos/etcd:v3.5.18
+    environment:
+      - ETCD_AUTO_COMPACTION_MODE=revision
+      - ETCD_AUTO_COMPACTION_RETENTION=1000
+      - ETCD_QUOTA_BACKEND_BYTES=4294967296
+      - ETCD_SNAPSHOT_COUNT=50000
+    volumes:
+      - etcd_data:/etcd
+    command: etcd -advertise-client-urls=http://etcd:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
+    healthcheck:
+      test: ["CMD", "etcdctl", "endpoint", "health"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  minio:
+    container_name: opspilot-minio
+    image: minio/minio:RELEASE.2023-03-20T20-16-18Z
+    environment:
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+    volumes:
+      - minio_data:/minio_data
+    command: minio server /minio_data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  milvus:
+    container_name: opspilot-milvus
+    image: milvusdb/milvus:v2.5.10
+    command: ["milvus", "run", "standalone"]
+    security_opt:
+      - seccomp:unconfined
+    environment:
+      ETCD_ENDPOINTS: etcd:2379
+      MINIO_ADDRESS: minio:9000
+    volumes:
+      - milvus_data:/var/lib/milvus
+    ports:
+      - "19530:19530"
+      - "9091:9091"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
+      interval: 30s
+      start_period: 90s
+      timeout: 20s
+      retries: 3
+    depends_on:
+      etcd:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+  attu:
+    container_name: opspilot-attu
+    image: zilliz/attu:v2.6
+    profiles: ["debug"]
+    ports:
+      - "8000:3000"
+    environment:
+      MILVUS_URL: milvus:19530
+    depends_on:
+      - milvus
+
+  # ==========================================
+  # MCP Server — 阿里云 SLS 日志查询
+  # ==========================================
+  mcp-server:
+    container_name: opspilot-mcp-server
+    build:
+      context: ./backend/mcp-server
+      dockerfile: Dockerfile
+    environment:
+      - ALIBABA_ACCESS_KEY_ID=${ALIBABA_ACCESS_KEY_ID}
+      - ALIBABA_ACCESS_KEY_SECRET=${ALIBABA_ACCESS_KEY_SECRET}
+      - SLS_ENDPOINT=${SLS_ENDPOINT}
+      - SLS_PROJECT=${SLS_PROJECT}
+      - SLS_LOGSTORE=${SLS_LOGSTORE}
+      - LISTEN_ADDR=:8090
+    restart: unless-stopped
+
+  # ==========================================
+  # 后端 API 服务
+  # ==========================================
+  backend:
+    container_name: opspilot-backend
+    build:
+      context: ./backend
+      dockerfile: manifest/docker/Dockerfile
+    ports:
+      - "8099:8099"
+    environment:
+      - DS_THINK_CHAT_MODEL_API_KEY=${DS_THINK_CHAT_MODEL_API_KEY}
+      - DS_THINK_CHAT_MODEL_BASE_URL=${DS_THINK_CHAT_MODEL_BASE_URL}
+      - DS_THINK_CHAT_MODEL_MODEL=${DS_THINK_CHAT_MODEL_MODEL}
+      - DS_QUICK_CHAT_MODEL_API_KEY=${DS_QUICK_CHAT_MODEL_API_KEY}
+      - DS_QUICK_CHAT_MODEL_BASE_URL=${DS_QUICK_CHAT_MODEL_BASE_URL}
+      - DS_QUICK_CHAT_MODEL_MODEL=${DS_QUICK_CHAT_MODEL_MODEL}
+      - DOUBAO_EMBEDDING_MODEL_API_KEY=${DOUBAO_EMBEDDING_MODEL_API_KEY}
+      - DOUBAO_EMBEDDING_MODEL_BASE_URL=${DOUBAO_EMBEDDING_MODEL_BASE_URL}
+      - DOUBAO_EMBEDDING_MODEL_MODEL=${DOUBAO_EMBEDDING_MODEL_MODEL}
+      - PROMETHEUS_URL=${PROMETHEUS_URL}
+      - MCP_URL=http://mcp-server:8090/mcp
+      - MILVUS_ADDR=milvus:19530
+    volumes:
+      - backend_docs:/app/docs
+      - ./backend/manifest/config:/app/manifest/config:ro
+    depends_on:
+      milvus:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ==========================================
+  # 前端 — Nginx 静态服务 + API 反向代理
+  # ==========================================
+  frontend:
+    container_name: opspilot-frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "${FRONTEND_PORT:-8098}:80"
+    depends_on:
+      - backend
+
+# ==========================================
+# 持久化卷
+# ==========================================
+volumes:
+  etcd_data:
+  minio_data:
+  milvus_data:
+  backend_docs:

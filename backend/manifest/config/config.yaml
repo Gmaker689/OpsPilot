@@ -1,0 +1,31 @@
+# https://goframe.org/docs/web/server-config-file-template
+server:
+  address: ":8099"
+  openapiPath: "/api.json"
+  swaggerPath: "/swagger"
+
+# https://goframe.org/docs/core/glog-config
+logger:
+  level: "all"
+  stdout: true
+
+ds_think_chat_model:
+  api_key: "sk-ccwqtyfclwmbmfbtjhlvncntvtoecsybodbwezjgjfegnerc"
+  base_url: "https://api.siliconflow.cn/v1"
+  model: "Qwen/Qwen3.6-27B"
+
+ds_quick_chat_model:
+  api_key: "sk-ccwqtyfclwmbmfbtjhlvncntvtoecsybodbwezjgjfegnerc"
+  base_url: "https://api.siliconflow.cn/v1"
+  model: "Qwen/Qwen3.6-27B"
+
+doubao_embedding_model:
+  api_key: "sk-ba278919f44d4bcaa869747a36581a4b"
+  base_url: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+  model: "text-embedding-v4"
+
+file_dir: "/app/docs"
+
+milvus_addr: "standalone:19530"
+
+mcp_url: "http://localhost:8091/mcp"

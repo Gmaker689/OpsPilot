@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker compose *)",
+      "Bash(go env *)",
+      "Bash(find \"C:\\\\Users\\\\17113\\\\go\\\\pkg\\\\mod\\\\github.com\\\\cloudwego\\\\eino-ext\" -name \"*.go\" -path \"*model/openai*\" 2>/dev/null | head -10)",
+      "Read(//c/Users/17113/go/pkg/mod/github.com/cloudwego/eino-ext/**)",
+      "Bash(curl -s -m 60 -X POST http://localhost:6872/api/chat -H \"Content-Type: application/json\" -d '{\"id\":\"test\",\"question\":\"你好，请简短回复\"}')"
+    ]
+  }
+}

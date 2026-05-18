@@ -1,0 +1,30 @@
+# https://goframe.org/docs/web/server-config-file-template
+server:
+  address: ":8000"
+  openapiPath: "/api.json"
+  swaggerPath: "/swagger"
+
+# https://goframe.org/docs/core/glog-config
+logger:
+  level: "all"
+  stdout: true
+
+ds_think_chat_model:
+  api_key: "sk-ba278919f44d4bcaa869747a36581a4b"
+  base_url: "https://ark.cn-beijing.volces.com/api/v3"
+  model: "deepseek-v3-1-terminus"
+
+ds_quick_chat_model:
+  api_key: "sk-ba278919f44d4bcaa869747a36581a4b"
+  base_url: "https://ark.cn-beijing.volces.com/api/v3"
+  model: "deepseek-v3-1-terminus"
+
+# 豆包embedding下架，下面的api key和base url换成阿里云的
+doubao_embedding_model:
+  api_key: "sk-ba278919f44d4bcaa869747a36581a4b"
+  base_url: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+  model: "text-embedding-v4"
+
+file_dir: C:\Users\17113\Desktop\Personal Resume\OpsPilot\backend\internal\ai\cmd\knowledge_cmd\docs\告警处理手册.md
+
+mcp_url: "http://localhost:8080/mcp"

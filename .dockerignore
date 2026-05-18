@@ -1,0 +1,27 @@
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+
+# Docker
+docker-compose.yml
+.env
+.env.example
+**/volumes/
+
+# Build artifacts
+*.exe
+bin/
+output/
+temp/
+main
+
+# Frontend
+frontend/node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
